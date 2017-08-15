@@ -35,10 +35,12 @@
                 <Enable>true</Enable>
                 <CleanUpTimeout>20160</CleanUpTimeout>
                 <CleanUpPeriod>1140</CleanUpPeriod>
+                <!--Instead of deleting all the records at once, we are deleting the records in chunks to prevent the -->
+                <!--possible deadlock and lock scenarios. The following property defines the chunk size.-->
+                <DeleteChunkSize>50000</DeleteChunkSize>
             </SessionDataCleanUp>
             <OperationDataCleanUp>
                 <Enable>true</Enable>
-                <CleanUpPeriod>720</CleanUpPeriod>
             </OperationDataCleanUp>
         </SessionDataPersist>
     </JDBCPersistenceManager>
@@ -164,9 +166,9 @@
         <!-- Validity period for refresh token -->
         <RefreshTokenValidityPeriod>84600</RefreshTokenValidityPeriod>
         <!-- Timestamp skew in seconds -->
-        <TimestampSkew>300</TimestampSkew>
+        <TimestampSkew>0</TimestampSkew>
         <!-- Enable OAuth caching -->
-        <EnableOAuthCache>true</EnableOAuthCache>
+        <EnableOAuthCache>false</EnableOAuthCache>
         <!-- Enable renewal of refresh token for refresh_token grant -->
         <RenewRefreshTokenForRefreshGrant>true</RenewRefreshTokenForRefreshGrant>
         <!-- Process the token before storing it in database, e.g. encrypting -->
@@ -221,6 +223,11 @@
             <SupportedGrantType>
                 <GrantTypeName>iwa:ntlm</GrantTypeName>
                 <GrantTypeHandlerImplClass>org.wso2.carbon.identity.oauth2.token.handlers.grant.iwa.ntlm.NTLMAuthenticationGrantHandler</GrantTypeHandlerImplClass>
+            </SupportedGrantType>
+            <SupportedGrantType>
+                <GrantTypeName>urn:ietf:params:oauth:grant-type:jwt-bearer</GrantTypeName>
+                <GrantTypeHandlerImplClass>org.wso2.carbon.identity.oauth2.grant.jwt.JWTBearerGrantHandler</GrantTypeHandlerImplClass>
+                <GrantTypeValidatorImplClass>org.wso2.carbon.identity.oauth2.grant.jwt.JWTGrantValidator</GrantTypeValidatorImplClass>
             </SupportedGrantType>
         </SupportedGrantTypes>
         <OAuthCallbackHandlers>
@@ -452,7 +459,7 @@
                        orderId="90" enable="true"/>
         <EventListener type="org.wso2.carbon.user.core.listener.UserOperationEventListener" name="org.wso2.carbon.identity.governance.listener.IdentityStoreEventListener"
                        orderId="97" enable="true">
-            <Property name="Data.Store">org.wso2.carbon.identity.governance.store.JDBCIdentityDataStore</Property>
+        <Property name="Data.Store">org.wso2.carbon.identity.governance.store.JDBCIdentityDataStore</Property>
         </EventListener>
         <EventListener type="org.wso2.carbon.identity.core.handler.AbstractIdentityMessageHandler"
                        name="org.wso2.carbon.identity.data.publisher.application.authentication.impl.DASLoginDataPublisherImpl"
@@ -466,25 +473,32 @@
     </EventListeners>
 
     <CacheConfig>
+        <!-- Identity cache configuration.
+             Timeouts are in seconds.
+             Capacity is the maximum cache size.
+             Unless specifically mentioned, you do not need to set the isDistributed flag.
+         -->
         <CacheManager name="IdentityApplicationManagementCacheManager">
-            <Cache name="AppAuthFrameworkSessionContextCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="AuthenticationContextCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="AuthenticationRequestCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="AuthenticationResultCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="AppInfoCache" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="AuthorizationGrantCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="OAuthCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="OAuthSessionDataCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="SAMLSSOParticipantCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="SAMLSSOSessionIndexCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="SAMLSSOSessionDataCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="ServiceProviderCache" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="ProvisioningConnectorCache" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="ProvisioningEntityCache" enable="false" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="ServiceProviderProvisioningConnectorCache" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="IdPCacheByAuthProperty" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="IdPCacheByHRI" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
-            <Cache name="IdPCacheByName" enable="true" timeout="1" capacity="5000" isDistributed="false"/>
+            <Cache name="AppAuthFrameworkSessionContextCache" enable="false" timeout="60" capacity="5000"
+                   isDistributed="false"/>
+            <Cache name="AuthenticationContextCache" enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="AuthenticationRequestCache" enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="AuthenticationResultCache"  enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="AppInfoCache"               enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="AuthorizationGrantCache"    enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="OAuthCache"                 enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="OAuthSessionDataCache"      enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="SAMLSSOParticipantCache"    enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="SAMLSSOSessionIndexCache"   enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="SAMLSSOSessionDataCache"    enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="ServiceProviderCache"       enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="ProvisioningConnectorCache" enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="ProvisioningEntityCache"    enable="false" timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="ServiceProviderProvisioningConnectorCache"
+                                                     enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="IdPCacheByAuthProperty"     enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="IdPCacheByHRI"              enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
+            <Cache name="IdPCacheByName"             enable="true"  timeout="60" capacity="5000" isDistributed="false"/>
         </CacheManager>
     </CacheConfig>
 
